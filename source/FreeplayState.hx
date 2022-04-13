@@ -145,10 +145,6 @@ class FreeplayState extends MusicBeatState
 			trace(md);
 		 */
 
-		#if mobileC
-		addVirtualPad(FULL, A_B);
-		#end
-
 		super.create();
 	}
 
@@ -189,6 +185,10 @@ class FreeplayState extends MusicBeatState
 		scoreText.text = "PERSONAL BEST:" + lerpScore;
 		comboText.text = combo + '\n';
 
+		var upP = FlxG.keys.justPressed.UP;
+		var downP = FlxG.keys.justPressed.DOWN;
+		var accepted = controls.ACCEPT;
+
 		var gamepad:FlxGamepad = FlxG.gamepads.lastActive;
 
 		if (gamepad != null)
@@ -211,26 +211,26 @@ class FreeplayState extends MusicBeatState
 			}
 		}
 
-		if (controls.UP_P)
+		if (upP)
 		{
 			changeSelection(-1);
 		}
-		if (controls.DOWN_P)
+		if (downP)
 		{
 			changeSelection(1);
 		}
 
-		if (controls.LEFT_P)
+		if (FlxG.keys.justPressed.LEFT)
 			changeDiff(-1);
-		if (controls.RIGHT_P)
+		if (FlxG.keys.justPressed.RIGHT)
 			changeDiff(1);
 
-		if (controls.BACK #if android || FlxG.android.justReleased.BACK #end)
+		if (controls.BACK)
 		{
 			FlxG.switchState(new MainMenuState());
 		}
 
-		if (controls.ACCEPT)
+		if (accepted)
 		{
 			// adjusting the song name to be compatible
 			var songFormat = StringTools.replace(songs[curSelected].songName, " ", "-");
@@ -258,10 +258,10 @@ class FreeplayState extends MusicBeatState
 	{
 		curDifficulty += change;
 
-		if (curDifficulty < 0)
-			curDifficulty = 2;
-		if (curDifficulty > 2)
-			curDifficulty = 0;
+        if (curDifficulty < 0)
+            curDifficulty = 2;
+        if (curDifficulty > 2)
+            curDifficulty = 0;
 
 		// adjusting the highscore song name to be compatible (changeDiff)
 		var songHighscore = StringTools.replace(songs[curSelected].songName, " ", "-");
@@ -311,8 +311,7 @@ class FreeplayState extends MusicBeatState
 		#end
 
 		#if PRELOAD_ALL
-		if (FlxG.save.data.freeplayMusic)
-			FlxG.sound.playMusic(Paths.inst(songs[curSelected].songName), 0);
+		FlxG.sound.playMusic(Paths.inst(songs[curSelected].songName), 0);
 		#end
 
 		var bullShit:Int = 0;
