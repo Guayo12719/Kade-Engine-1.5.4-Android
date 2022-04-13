@@ -36,9 +36,6 @@ import openfl.events.IOErrorEvent;
 import openfl.media.Sound;
 import openfl.net.FileReference;
 import openfl.utils.ByteArray;
-#if mobileC
-import mobile.FlxVirtualPad;
-#end
 
 using StringTools;
 
@@ -96,16 +93,6 @@ class ChartingState extends MusicBeatState
 	var leftIcon:HealthIcon;
 	var rightIcon:HealthIcon;
 
-	#if mobileC
-	//add buttons
-	var key_space:FlxButton;
-	var key_shift:FlxButton;
-	var key_ctrl:FlxButton;
-	//var key_alt:FlxButton;
-
-	var _pad:FlxVirtualPad;
-	#end
-
 	private var lastNote:Note;
 	var claps:Array<Note> = [];
 
@@ -142,15 +129,7 @@ class ChartingState extends MusicBeatState
 
 		blackBorder.alpha = 0.3;
 
-		snapText = new FlxText(40,10,0,
-		"Snap: 1/" +
-		snap +
-		" (Press Control to unsnap the cursor)" +
-		")\nAdd Notes: 1-8 (or click)\n"
-		#if !mobileC
-		+ "Burning note - ALT + Click\n"
-		#end
-		, 14);
+		snapText = new FlxText(60,10,0,"Snap: 1/" + snap + " (Press Control to unsnap the cursor)\nAdd Notes: 1-8 (or click)\n", 14);
 		snapText.scrollFactor.set();
 
 		gridBlackLine = new FlxSprite(gridBG.x + gridBG.width / 2).makeGraphic(2, Std.int(gridBG.height), FlxColor.BLACK);
@@ -222,32 +201,7 @@ class ChartingState extends MusicBeatState
 		add(blackBorder);
 		add(snapText);
 
-		#if mobileC
-		// add buttons
-		key_space = new FlxButton(60, 60, "");
-        key_space.loadGraphic(Paths.image("key_space")); //"assets/shared/images/key_space.png"
-        key_space.alpha = 0.75;
-        add(key_space);
 
-        key_shift = new FlxButton(60, 130, "");
-        key_shift.loadGraphic(Paths.image("key_shift")); //"assets/shared/images/key_shift.png"
-        key_shift.alpha = 0.75;
-        add(key_shift);
-
-		key_ctrl = new FlxButton(60, 200, "");
-        key_ctrl.loadGraphic(Paths.image("key_ctrl")); //"assets/shared/images/key_ctrl.png"
-        key_ctrl.alpha = 0.75;
-        add(key_ctrl);
-
-		/*key_alt = new FlxButton(60, 270, "");
-        key_alt.loadGraphic(Paths.image("key_alt")); //"assets/shared/images/key_alt.png"
-        key_alt.alpha = 0.75;
-        add(key_alt);*/
-
-		_pad = new FlxVirtualPad(RIGHT_FULL, A);
-    	_pad.alpha = 0.75;
-    	this.add(_pad);
-		#end
 
 		super.create();
 	}
@@ -328,6 +282,7 @@ class ChartingState extends MusicBeatState
 		var stepperSongVol:FlxUINumericStepper = new FlxUINumericStepper(10, 110, 0.1, 1, 0.1, 10, 1);
 		stepperSongVol.value = FlxG.sound.music.volume;
 		stepperSongVol.name = 'song_instvol';
+
 
 		var hitsounds = new FlxUICheckBox(10, stepperSongVol.y + 60, null, null, "Play hitsounds", 100);
 		hitsounds.checked = false;
@@ -451,7 +406,6 @@ class ChartingState extends MusicBeatState
 	var check_changeBPM:FlxUICheckBox;
 	var stepperSectionBPM:FlxUINumericStepper;
 	var check_altAnim:FlxUICheckBox;
-	var burnNote:FlxUICheckBox;
 
 	function addSectionUI():Void
 	{
@@ -533,10 +487,6 @@ class ChartingState extends MusicBeatState
 		var stepperSusLengthLabel = new FlxText(74,10,'Note Sustain Length');
 
 		var applyLength:FlxButton = new FlxButton(10, 100, 'Apply Data');
-
-		burnNote = new FlxUICheckBox(10, 25, null, null, "Put burn note?", 100);
-		burnNote.checked = false;
-		tab_group_note.add(burnNote);
 
 		tab_group_note.add(stepperSusLength);
 		tab_group_note.add(stepperSusLengthLabel);
@@ -716,12 +666,7 @@ class ChartingState extends MusicBeatState
 	{
 		updateHeads();
 
-		snapText.text = "Snap: 1/" + snap +
-		" (" + (doSnapShit ? "Control to disable" : "Snap Disabled, Control to renable") +
-		")\nAdd Notes: 1-8 (or click)\n"
-		#if !mobileC
-		+ "Burning note - ALT + Click\n"
-		#end;
+		snapText.text = "Snap: 1/" + snap + " (" + (doSnapShit ? "Control to disable" : "Snap Disabled, Control to renable") + ")\nAdd Notes: 1-8 (or click)\n";
 
 		curStep = recalculateSteps();
 
@@ -915,20 +860,19 @@ class ChartingState extends MusicBeatState
 			&& FlxG.mouse.y < gridBG.y + (GRID_SIZE * _song.notes[curSection].lengthInSteps))
 		{
 			dummyArrow.x = Math.floor(FlxG.mouse.x / GRID_SIZE) * GRID_SIZE;
-			if (FlxG.keys.pressed.SHIFT #if mobileC || key_shift.pressed #end)
+			if (FlxG.keys.pressed.SHIFT)
 				dummyArrow.y = FlxG.mouse.y;
 			else
 				dummyArrow.y = Math.floor(FlxG.mouse.y / GRID_SIZE) * GRID_SIZE;
 		}
 
-		if (FlxG.keys.justPressed.ENTER #if mobileC || _pad.buttonA.justPressed #end)
+		if (FlxG.keys.justPressed.ENTER)
 		{
 			lastSection = curSection;
 
 			PlayState.SONG = _song;
 			FlxG.sound.music.stop();
 			vocals.stop();
-			FlxG.mouse.visible = false;
 			LoadingState.loadAndSwitchState(new PlayState());
 		}
 
@@ -943,7 +887,7 @@ class ChartingState extends MusicBeatState
 
 		if (FlxG.keys.justPressed.TAB)
 		{
-			if (FlxG.keys.pressed.SHIFT #if mobileC || key_shift.pressed #end)
+			if (FlxG.keys.pressed.SHIFT)
 			{
 				UI_box.selected_tab -= 1;
 				if (UI_box.selected_tab < 0)
@@ -960,7 +904,7 @@ class ChartingState extends MusicBeatState
 		if (!typingShit.hasFocus)
 		{
 
-			if (FlxG.keys.pressed.CONTROL #if mobileC || key_ctrl.pressed #end)
+			if (FlxG.keys.pressed.CONTROL)
 			{
 				if (FlxG.keys.justPressed.Z && lastNote != null)
 				{
@@ -973,16 +917,16 @@ class ChartingState extends MusicBeatState
 			}
 
 			var shiftThing:Int = 1;
-			if (FlxG.keys.pressed.SHIFT #if mobileC || key_shift.pressed #end)
+			if (FlxG.keys.pressed.SHIFT)
 				shiftThing = 4;
-			if (!FlxG.keys.pressed.CONTROL #if mobileC || !key_ctrl.pressed #end)
+			if (!FlxG.keys.pressed.CONTROL)
 			{
-				if (FlxG.keys.justPressed.RIGHT || FlxG.keys.justPressed.D #if mobileC || _pad.buttonRight.justPressed #end)
+				if (FlxG.keys.justPressed.RIGHT || FlxG.keys.justPressed.D)
 					changeSection(curSection + shiftThing);
-				if (FlxG.keys.justPressed.LEFT || FlxG.keys.justPressed.A #if mobileC || _pad.buttonLeft.justPressed #end)
+				if (FlxG.keys.justPressed.LEFT || FlxG.keys.justPressed.A)
 					changeSection(curSection - shiftThing);
 			}	
-			if (FlxG.keys.justPressed.SPACE  #if mobileC || key_space.justPressed #end)
+			if (FlxG.keys.justPressed.SPACE)
 			{
 				if (FlxG.sound.music.playing)
 				{
@@ -999,7 +943,7 @@ class ChartingState extends MusicBeatState
 
 			if (FlxG.keys.justPressed.R)
 			{
-				if (FlxG.keys.pressed.SHIFT #if mobileC || key_shift.pressed #end)
+				if (FlxG.keys.pressed.SHIFT)
 					resetSection(true);
 				else
 					resetSection();
@@ -1029,9 +973,9 @@ class ChartingState extends MusicBeatState
 				vocals.time = FlxG.sound.music.time;
 			}
 
-			if (!FlxG.keys.pressed.SHIFT  #if mobileC || !key_shift.pressed #end)
+			if (!FlxG.keys.pressed.SHIFT)
 			{
-				if (FlxG.keys.pressed.W || FlxG.keys.pressed.S #if mobileC || _pad.buttonDown.pressed || _pad.buttonUp.pressed #end)
+				if (FlxG.keys.pressed.W || FlxG.keys.pressed.S)
 				{
 					FlxG.sound.music.pause();
 					vocals.pause();
@@ -1039,7 +983,7 @@ class ChartingState extends MusicBeatState
 
 					var daTime:Float = 700 * FlxG.elapsed;
 
-					if (FlxG.keys.pressed.W #if mobileC || _pad.buttonUp.pressed #end)
+					if (FlxG.keys.pressed.W)
 					{
 						FlxG.sound.music.time -= daTime;
 					}
@@ -1051,14 +995,14 @@ class ChartingState extends MusicBeatState
 			}
 			else
 			{
-				if (FlxG.keys.justPressed.W || FlxG.keys.justPressed.S #if mobileC || _pad.buttonDown.justPressed || _pad.buttonUp.justPressed #end)
+				if (FlxG.keys.justPressed.W || FlxG.keys.justPressed.S)
 				{
 					FlxG.sound.music.pause();
 					vocals.pause();
 
 					var daTime:Float = Conductor.stepCrochet * 2;
 
-					if (FlxG.keys.justPressed.W #if mobileC || _pad.buttonUp.justPressed #end)
+					if (FlxG.keys.justPressed.W)
 					{
 						FlxG.sound.music.time -= daTime;
 					}
@@ -1294,8 +1238,8 @@ class ChartingState extends MusicBeatState
 			var daNoteInfo = i[1];
 			var daStrumTime = i[0];
 			var daSus = i[2];
-			var daType = i[3];
-			var note:Note = new Note(daStrumTime, daNoteInfo % 4, null, false, daType);
+
+			var note:Note = new Note(daStrumTime, daNoteInfo % 4,null,false,true);
 			note.sustainLength = daSus;
 			note.setGraphicSize(GRID_SIZE, GRID_SIZE);
 			note.updateHitbox();
@@ -1444,31 +1388,26 @@ class ChartingState extends MusicBeatState
 			updateSectionUI();
 			updateNoteUI();
 		}
-		private function addNote(?n:Note):Void
-			{
-				var noteStrum = getStrumTime(dummyArrow.y) + sectionStartTime();
-				var noteData = Math.floor(FlxG.mouse.x / GRID_SIZE);
-				var noteSus = 0;
-				var noteType = "";
+	private function addNote(?n:Note):Void
+	{
+		var noteStrum = getStrumTime(dummyArrow.y) + sectionStartTime();
+		var noteData = Math.floor(FlxG.mouse.x / GRID_SIZE);
+		var noteSus = 0;
 
-				// combination of keys to put a custom notes
-				if (FlxG.keys.pressed.ALT || burnNote.checked)
-					noteType = "burning";
+		if (n != null)
+			_song.notes[curSection].sectionNotes.push([n.strumTime, n.noteData, n.sustainLength]);
+		else
+			_song.notes[curSection].sectionNotes.push([noteStrum, noteData, noteSus]);
 
-				if (n != null)
-					_song.notes[curSection].sectionNotes.push([n.strumTime, n.noteData, n.sustainLength, n.noteType]);
-				else
-					_song.notes[curSection].sectionNotes.push([noteStrum, noteData, noteSus, noteType]);
- 
-				var thingy = _song.notes[curSection].sectionNotes[_song.notes[curSection].sectionNotes.length - 1];
- 
-				curSelectedNote = thingy;
- 
-				updateGrid();
-				updateNoteUI();
- 
-				autosaveSong();
-			}
+		var thingy = _song.notes[curSection].sectionNotes[_song.notes[curSection].sectionNotes.length - 1];
+
+		curSelectedNote = thingy;
+
+		updateGrid();
+		updateNoteUI();
+
+		autosaveSong();
+	}
 
 	function getStrumTime(yPos:Float):Float
 	{
